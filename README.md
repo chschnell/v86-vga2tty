@@ -43,6 +43,7 @@ VirtFS options:
 
 Other options:
   -verbose              Show additional output
+  -debug_v86            Run V86 in debug mode
   -debug_screenshots    Show VGA screenshots instead of normal output
 
 Standard options:
