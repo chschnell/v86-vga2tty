@@ -411,7 +411,7 @@ function parse_cli()
         console.log(vga2tty_version);
         console.log("");
         console.log("Usage:");
-        console.log("  v86-system [options]");
+        console.log("  vga2tty.js [options]");
         console.log("");
         console.log("Memory options:");
         console.log("  -m, --mem SIZE        Set memory size (default: 512M)");
@@ -453,10 +453,10 @@ function parse_cli()
         console.log("  -v, --version         Show version");
         console.log("");
         console.log("Examples:");
-        console.log("  v86-system -hda disk.img");
-        console.log("  v86-system -m 1G -hda disk.img -cdrom boot.iso");
-        console.log("  v86-system -kernel vmlinuz -initrd initrd.img -append \"console=ttyS0\"");
-        console.log("  v86-system -hda disk.img -netdev user,type=virtio,relay_url=ws://localhost:8777");
+        console.log("  vga2tty.js -hda disk.img");
+        console.log("  vga2tty.js -m 1G -hda disk.img -cdrom boot.iso");
+        console.log("  vga2tty.js -kernel vmlinuz -initrd initrd.img -append \"console=ttyS0\"");
+        console.log("  vga2tty.js -hda disk.img -netdev user,type=virtio,relay_url=ws://localhost:8777");
         console.log("");
         return;
     }

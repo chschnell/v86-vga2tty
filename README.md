@@ -8,7 +8,7 @@ $ ./vga2tty.js -h
 vga2tty 0.1
 
 Usage:
-  v86-system [options]
+  vga2tty.js [options]
 
 Memory options:
   -m, --mem SIZE        Set memory size (default: 512M)
@@ -50,8 +50,8 @@ Standard options:
   -v, --version         Show version
 
 Examples:
-  v86-system -hda disk.img
-  v86-system -m 1G -hda disk.img -cdrom boot.iso
-  v86-system -kernel vmlinuz -initrd initrd.img -append "console=ttyS0"
-  v86-system -hda disk.img -netdev user,type=virtio,relay_url=ws://localhost:8777
+  vga2tty.js -hda disk.img
+  vga2tty.js -m 1G -hda disk.img -cdrom boot.iso
+  vga2tty.js -kernel vmlinuz -initrd initrd.img -append "console=ttyS0"
+  vga2tty.js -hda disk.img -netdev user,type=virtio,relay_url=ws://localhost:8777
 ```
