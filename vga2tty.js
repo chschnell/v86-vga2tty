@@ -4,10 +4,6 @@ import url from "node:url";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-// TODO: make this import relative to setup.v86dir
-import { V86 } from "../v86/build/libv86.mjs";
-//import { V86 } from "../v86/src/main.js";
-
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 function zeropad(i, n)
@@ -289,7 +285,7 @@ class StdinHandler
             const scancode = this.ANSI_TO_SCANCODE[input];
             if(scancode !== undefined)
             {
-                await emulator.keyboard_send_scancodes(this.encode_scancode_keypress(scancode));
+                await this.emulator.keyboard_send_scancodes(this.encode_scancode_keypress(scancode));
             }
             else
             {
@@ -399,6 +395,7 @@ function parse_cli()
             virtfs: { type: "string" },
             // Other options
             verbose: { type: "boolean", default: false },
+            debug_v86: { type: "boolean", default: false },
             debug_screenshots: { type: "boolean", default: false },
             // Standard options
             help: { type: "boolean", short: "h" },
@@ -446,6 +443,7 @@ function parse_cli()
         console.log("");
         console.log("Other options:");
         console.log("  -verbose              Show additional output");
+        console.log("  -debug_v86            Run V86 in debug mode");
         console.log("  -debug_screenshots    Show VGA screenshots instead of normal output");
         console.log("");
         console.log("Standard options:");
@@ -535,7 +533,7 @@ function parse_cli()
 
     // parse command line options of v86_config
     const v86_config = {
-        wasm_path: values.v86wasm || path.join(values.v86dir, "build", "v86.wasm"),
+        wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
         bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
         vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
         log_level: 0,
@@ -560,6 +558,8 @@ function parse_cli()
     // return the setup object
     return {
         v86_config: v86_config,
+        v86dir: values.v86dir,
+        debug_v86: values.debug_v86,
         debug_screenshots: values.debug_screenshots,
         verbose: values.verbose
     };
@@ -611,11 +611,17 @@ async function main(setup)
 }
 
 const setup = parse_cli();
-if(setup)
+if(!setup)
 {
-    if(setup.verbose)
-    {
-        console.log("setup:", setup);
-    }
-    await main(setup);
+    exit(0);
 }
+
+if(setup.verbose)
+{
+    console.log("setup:", setup);
+}
+
+const libv86_path = path.join(setup.v86dir, setup.debug_v86 ? "src/main.js" : "build/libv86.mjs");
+const V86 = (await import(libv86_path)).V86;
+
+await main(setup);
