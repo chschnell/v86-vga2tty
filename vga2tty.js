@@ -613,7 +613,7 @@ async function main(setup)
 const setup = parse_cli();
 if(!setup)
 {
-    exit(0);
+    process.exit(0);
 }
 
 if(setup.verbose)
