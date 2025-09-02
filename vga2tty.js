@@ -364,7 +364,7 @@ function parse_cli()
     );
 
     // Parse command line arguments using built-in Node.js parseArgs
-    const { values, positionals } = parseArgs({
+    const { values } = parseArgs({
         args: normalized_args,
         strict: true,
         options: {
@@ -460,12 +460,12 @@ function parse_cli()
         console.log("  vga2tty.js -kernel vmlinuz -initrd initrd.img -append \"console=ttyS0\"");
         console.log("  vga2tty.js -hda disk.img -netdev user,type=virtio,relay_url=ws://localhost:8777");
         console.log("");
-        return;
+        process.exit(0);
     }
     else if(values.version)
     {
         console.log(vga2tty_version);
-        return;
+        process.exit(0);
     }
 
     // Helper functions
@@ -636,11 +636,6 @@ async function main(setup)
 }
 
 const setup = parse_cli();
-if(!setup)
-{
-    process.exit(0);
-}
-
 if(setup.verbose)
 {
     console.log("setup:", setup);
