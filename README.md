@@ -54,7 +54,7 @@ System options:
   -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)
   -acpi                 Enable ACPI (default: off)
   -fastboot             Enable fast boot
-  -loglevel             Debug log level (default: 0)
+  -loglevel LEVEL       Debug log level (default: 0)
 
 Network options:
   -netdev CONFIG        Network device configuration

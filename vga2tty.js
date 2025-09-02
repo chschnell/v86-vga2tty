@@ -430,14 +430,14 @@ function parse_cli()
         console.log("  -append STRING        Kernel command line");
         console.log("");
         console.log("System options:");
-        console.log("  -v86dir PATH          V86 standard installation directory (default: ../v86)");
+        console.log("  -v86dir PATH          V86 installation directory (default: ../v86)");
         console.log("  -libv86 FILE          V86 library file path (default: <v86dir>/build/libv86.mjs)");
         console.log("  -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)");
         console.log("  -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)");
         console.log("  -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)");
         console.log("  -acpi                 Enable ACPI (default: off)");
         console.log("  -fastboot             Enable fast boot");
-        console.log("  -loglevel             Debug log level (default: 0)");
+        console.log("  -loglevel LEVEL       Debug log level (default: 0)");
         console.log("");
         console.log("Network options:");
         console.log("  -netdev CONFIG        Network device configuration");
