@@ -6,11 +6,6 @@ import { parseArgs } from "node:util";
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
-function zeropad(i, n)
-{
-    return i.toString().padStart(n || 2, "0");
-}
-
 // ---------------------------------------------------------------------------
 // class VgaObserver
 // ---------------------------------------------------------------------------
@@ -81,11 +76,11 @@ class VgaObserver
 
             if(this.debug_screenshots)
             {
-                console.log("--- Snapshot " + zeropad(this.snapshot_count++) +
+                console.log("--- Snapshot " + this.zeropad(this.snapshot_count++) +
                     " -----------------------------------------------------------------------");
                 for(let i = 0; i < this.screen_rows.length; i++)
                 {
-                    console.log(zeropad(i) + " | " + this.screen_rows[i] + " |");
+                    console.log(this.zeropad(i) + " | " + this.screen_rows[i] + " |");
                 }
             }
             else
@@ -192,6 +187,11 @@ class VgaObserver
             }
         }
         return true;
+    }
+
+    zeropad(i, n)
+    {
+        return i.toString().padStart(n || 2, "0");
     }
 }
 
@@ -384,11 +384,13 @@ function parse_cli()
             append: { type: "string" },
             // System options
             v86dir: { type: "string", default: path.join(__dirname, "../v86") },
+            libv86: { type: "string" },
             v86wasm: { type: "string" },
             bios: { type: "string" },
             vgabios: { type: "string" },
             acpi: { type: "boolean", default: false },
             fastboot: { type: "boolean", default: false },
+            loglevel: { type: "string", default: "0" },
             // Network options
             netdev: { type: "string" },
             // VirtFS options
@@ -428,12 +430,14 @@ function parse_cli()
         console.log("  -append STRING        Kernel command line");
         console.log("");
         console.log("System options:");
-        console.log("  -v86dir PATH          V86 standard installation directory (default: ../v86/)");
+        console.log("  -v86dir PATH          V86 standard installation directory (default: ../v86)");
+        console.log("  -libv86 FILE          V86 library file path (default: <v86dir>/build/libv86.mjs)");
         console.log("  -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)");
         console.log("  -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)");
         console.log("  -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)");
         console.log("  -acpi                 Enable ACPI (default: off)");
         console.log("  -fastboot             Enable fast boot");
+        console.log("  -loglevel             Debug log level (default: 0)");
         console.log("");
         console.log("Network options:");
         console.log("  -netdev CONFIG        Network device configuration");
@@ -536,7 +540,7 @@ function parse_cli()
         wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
         bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
         vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
-        log_level: 0,
+        log_level: setup.loglevel,
         autostart: true
     };
     assign_mem("mem", "memory_size");
@@ -559,10 +563,27 @@ function parse_cli()
     return {
         v86_config: v86_config,
         v86dir: values.v86dir,
+        libv86: values.libv86 || path.join(values.v86dir, values.debug_v86 ? "src/main.js" : "build/libv86.mjs"),
         debug_v86: values.debug_v86,
         debug_screenshots: values.debug_screenshots,
         verbose: values.verbose
     };
+}
+
+function cp437_to_unicode(text)
+{
+    const CP437_high =
+        "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒ" +
+        "áíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐" +
+        "└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀" +
+        "αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
+    const result = [];
+    for(let i=0; i<text.length; i++)
+    {
+        const i_ch = text.charCodeAt(i);
+        result.push(i_ch > 127 ? CP437_high[i_ch - 128] : text[i]);
+    }
+    return result.join("");
 }
 
 async function main(setup)
@@ -577,7 +598,7 @@ async function main(setup)
             output.push(rows[i], "\n");
         }
         output.push(rows[end - 1].trimRight(), ANSI_ERASE_TO_EOL);
-        process.stdout.write(output.join(""));
+        process.stdout.write(cp437_to_unicode(output.join("")));
     };
     const vga_observer = new VgaObserver(rows_handler, setup.debug_screenshots);
 
@@ -621,7 +642,5 @@ if(setup.verbose)
     console.log("setup:", setup);
 }
 
-const libv86_path = path.join(setup.v86dir, setup.debug_v86 ? "src/main.js" : "build/libv86.mjs");
-const V86 = (await import(libv86_path)).V86;
-
+const V86 = (await import(setup.libv86)).V86;
 await main(setup);
