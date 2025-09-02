@@ -437,7 +437,6 @@ function parse_cli()
         console.log("  -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)");
         console.log("  -acpi                 Enable ACPI (default: off)");
         console.log("  -fastboot             Enable fast boot");
-        console.log("  -loglevel LEVEL       Debug log level (default: 0)");
         console.log("");
         console.log("Network options:");
         console.log("  -netdev CONFIG        Network device configuration");
@@ -445,8 +444,9 @@ function parse_cli()
         console.log("VirtFS options:");
         console.log("  -virtfs CONFIG        VirtFS configuration");
         console.log("");
-        console.log("Other options:");
+        console.log("Debugging options:");
         console.log("  -verbose              Show additional output");
+        console.log("  -loglevel LEVEL       Debug log level (default: 0, needs -debug_v86)");
         console.log("  -debug_v86            Run V86 in debug mode");
         console.log("  -debug_screenshots    Show VGA screenshots instead of normal output");
         console.log("");
