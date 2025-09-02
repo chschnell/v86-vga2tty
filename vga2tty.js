@@ -570,35 +570,39 @@ function parse_cli()
     };
 }
 
-function cp437_to_unicode(text)
+const CP437 =
+    "\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼" +
+    " !\"#$%&'()*+,-./0123456789:;<=>?" +
+    "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_" +
+    "`abcdefghijklmnopqrstuvwxyz{|}~⌂" +
+    "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒ" +
+    "áíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐" +
+    "└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀α" +
+    "ßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
+
+function cp437_to_unicode(cp437_str)
 {
-    const CP437_high =
-        "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒ" +
-        "áíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐" +
-        "└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀" +
-        "αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
     const result = [];
-    for(let i=0; i<text.length; i++)
+    for(let i = 0; i < cp437_str.length; i++)
     {
-        const i_ch = text.charCodeAt(i);
-        result.push(i_ch > 127 ? CP437_high[i_ch - 128] : text[i]);
+        result.push(CP437[cp437_str.charCodeAt(i)]);
     }
     return result.join("");
 }
 
 async function main(setup)
 {
-    const ANSI_ERASE_TO_EOL = "\u001b[0K";
+    const ANSI_ERASE_TO_EOL = "\u001b[K";
 
     // create VgaObserver instance
     const rows_handler = (rows, start, end, all_new) => {
         let output = [all_new ? "\n" : "\r"];
         for(let i = start; i < end - 1; i++)
         {
-            output.push(rows[i], "\n");
+            output.push(cp437_to_unicode(rows[i]), "\n");
         }
-        output.push(rows[end - 1].trimRight(), ANSI_ERASE_TO_EOL);
-        process.stdout.write(cp437_to_unicode(output.join("")));
+        output.push(cp437_to_unicode(rows[end - 1].trimRight()), ANSI_ERASE_TO_EOL);
+        process.stdout.write(output.join(""));
     };
     const vga_observer = new VgaObserver(rows_handler, setup.debug_screenshots);
 
