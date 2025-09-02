@@ -1,6 +1,25 @@
 # v86-vga2tty
 Connects V86 screen buffer to interactive terminal
 
+## Installation
+
+If you clone this repository next to [v86](https://github.com/copy/v86) `vga2tty` will find all needed files automatically, this is the assumed file tree:
+
+```
+foo/
++- v86/
+¦  +- bios
+¦  ¦  +-- seabios.img
+¦  ¦  +-- vgabios.img
+¦  +- build
+¦  ¦  +-- libv86.mjs
+¦  ¦  +-- v86.wasm
++- v86-vga2tty/
+¦  +- v86-vga2tty.js
+```
+
+Alternatively, use CLI option `-v86dir` to specify the v86 installation directory, or use options `-libv86`, `-v86wasm`, `-bios` and `-vgabios` to tell `vga2tty` where to find the required v86 files.
+
 ## Command line interface
 
 ```
@@ -28,12 +47,14 @@ Boot options:
   -append STRING        Kernel command line
 
 System options:
-  -v86dir PATH          V86 standard installation directory (default: ../v86/)
+  -v86dir PATH          V86 standard installation directory (default: ../v86)
+  -libv86 FILE          V86 library file path (default: <v86dir>/build/libv86.mjs)
   -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)
   -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)
   -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)
   -acpi                 Enable ACPI (default: off)
   -fastboot             Enable fast boot
+  -loglevel             Debug log level (default: 0)
 
 Network options:
   -netdev CONFIG        Network device configuration
