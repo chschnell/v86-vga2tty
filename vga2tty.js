@@ -388,6 +388,7 @@ function parse_cli()
             v86wasm: { type: "string" },
             bios: { type: "string" },
             vgabios: { type: "string" },
+            encoding: { type: "string" },
             acpi: { type: "boolean", default: false },
             fastboot: { type: "boolean", default: false },
             loglevel: { type: "string", default: "0" },
@@ -435,6 +436,7 @@ function parse_cli()
         console.log("  -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)");
         console.log("  -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)");
         console.log("  -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)");
+        console.log("  -encoding STRING      8-bit character encoding (default: cp437");
         console.log("  -acpi                 Enable ACPI (default: off)");
         console.log("  -fastboot             Enable fast boot");
         console.log("");
@@ -541,7 +543,8 @@ function parse_cli()
         bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
         vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
         log_level: parseInt(values.loglevel, 10),
-        autostart: true
+        autostart: true,
+        screen: { encoding: values.encoding }
     };
     assign_mem("mem", "memory_size");
     assign_mem("vgamem", "vga_memory_size");
@@ -570,26 +573,6 @@ function parse_cli()
     };
 }
 
-const CP437 =
-    "\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼" +
-    " !\"#$%&'()*+,-./0123456789:;<=>?" +
-    "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_" +
-    "`abcdefghijklmnopqrstuvwxyz{|}~⌂" +
-    "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒ" +
-    "áíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐" +
-    "└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀α" +
-    "ßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
-
-function cp437_to_unicode(cp437_str)
-{
-    const result = [];
-    for(let i = 0; i < cp437_str.length; i++)
-    {
-        result.push(CP437[cp437_str.charCodeAt(i)]);
-    }
-    return result.join("");
-}
-
 async function main(setup)
 {
     const ANSI_ERASE_TO_EOL = "\u001b[K";
@@ -599,9 +582,9 @@ async function main(setup)
         let output = [all_new ? "\n" : "\r"];
         for(let i = start; i < end - 1; i++)
         {
-            output.push(cp437_to_unicode(rows[i]), "\n");
+            output.push(rows[i], "\n");
         }
-        output.push(cp437_to_unicode(rows[end - 1].trimRight()), ANSI_ERASE_TO_EOL);
+        output.push(rows[end - 1].trimRight(), ANSI_ERASE_TO_EOL);
         process.stdout.write(output.join(""));
     };
     const vga_observer = new VgaObserver(rows_handler, setup.debug_screenshots);
@@ -625,6 +608,7 @@ async function main(setup)
 
     // wait for emulator to start
     await new Promise(resolve => emulator.bus.register("emulator-started", () => resolve()));
+
     vga_observer.start(emulator);
     stdin_handler.start(emulator);
 
