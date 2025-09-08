@@ -2,6 +2,7 @@
 
 import url from "node:url";
 import path from "node:path";
+import readline from "node:readline";
 import { parseArgs } from "node:util";
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -201,8 +202,9 @@ class VgaObserver
 
 class StdinHandler
 {
-    // Map ANSI escape sequences of specific keys to their respective scancodes
-    ANSI_TO_SCANCODE = {
+    // Map ANSI escape sequences of special keys to their respective scancodes
+    SPECIAL_KEY_SCANCODES =
+    {
         "\u001b[11~": 0x3b,     // F1
         "\u001b[12~": 0x3c,     // F2
         "\u001b[13~": 0x3d,     // F3
@@ -229,22 +231,43 @@ class StdinHandler
         "\u001b[6~": 0xe051,    // PageDown
     };
 
-    ANSI_ERASE_TO_EOL = "\u001b[0K";
-
-    // CTRL+C scancode sequence
-    CTRL_C_SCANCODES = [
-        0x1D,        // press CTRL
-        0x2E,        // press C
-        0x2E | 0x80, // release C
-        0x1D | 0x80, // release CTRL
-    ];
+    // Map control characters (below 32) to their CTRL+<Char> character scancodes
+    CTRL_KEY_SCANCODES =
+    {
+        "\u0001": 0x1e,         // CTRL+A
+        "\u0002": 0x30,         // CTRL+B
+        "\u0003": 0x2E,         // CTRL+C
+        "\u0004": 0x20,         // CTRL+D
+        "\u0005": 0x12,         // CTRL+E
+        "\u0006": 0x21,         // CTRL+F
+        "\u0007": 0x22,         // CTRL+G
+        "\b":     0x23,         // CTRL+H (Backspace)
+        "\t":     0x17,         // CTRL+I (Tab)
+        "\n":     0x24,         // CTRL+J (Enter)
+        "\u000b": 0x25,         // CTRL+K
+        "\f":     0x26,         // CTRL+L (Formfeed)
+        "\r":     0x32,         // CTRL+M (Return)
+        "\u000e": 0x31,         // CTRL+N
+        "\u000f": 0x18,         // CTRL+O
+        "\u0010": 0x19,         // CTRL+P
+        "\u0011": 0x10,         // CTRL+Q
+        "\u0012": 0x13,         // CTRL+R
+        "\u0013": 0x1F,         // CTRL+S
+        "\u0014": 0x14,         // CTRL+T
+        "\u0015": 0x16,         // CTRL+U
+        "\u0016": 0x2F,         // CTRL+V
+        "\u0017": 0x11,         // CTRL+W
+        "\u0018": 0x2D,         // CTRL+X
+        "\u0019": 0x15,         // CTRL+Y
+        "\u001a": 0x2C,         // CTRL+Z
+    };
 
     constructor(ctrl_c_handler)
     {
         this.ctrl_c_handler = ctrl_c_handler;
         this.emulator = undefined;
         this.ctrl_c_count = undefined;
-        this.stdin_handler = input => this.handle_stdin(input);
+        this.keypress_handler = (text, key) => this.handle_keypress(text, key);
     }
 
     start(emulator)
@@ -253,13 +276,12 @@ class StdinHandler
         {
             this.emulator = emulator;
             this.ctrl_c_count = 0;
-            if(process.stdin.isTTY)
-            {
-                process.stdin.setRawMode(true);
-            }
-            process.stdin.resume();
-            process.stdin.setEncoding("utf8");
-            process.stdin.on("data", this.stdin_handler);
+            // allow us to listen for events from stdin
+            readline.emitKeypressEvents(process.stdin);
+            // raw mode gets rid of standard keypress events and other
+            // functionality Node.js adds by default
+            process.stdin.setRawMode(true);
+            process.stdin.on("keypress", this.keypress_handler);
         }
     }
 
@@ -267,83 +289,88 @@ class StdinHandler
     {
         if(this.emulator !== undefined)
         {
-            process.stdin.removeListener("data", this.stdin_handler);
-            if(process.stdin.isTTY)
-            {
-                process.stdin.setRawMode(false);
-            }
+            process.stdin.removeListener("keypress", this.keypress_handler);
+            process.stdin.setRawMode(false);
             process.stdin.pause();
             this.emulator = undefined;
         }
     }
 
-    async handle_stdin(input)
+    async handle_keypress(key_text, key)
     {
-        if(input.startsWith("\u001b["))
+        if(key.sequence === "\u0003")
         {
-            // handle ANSI escape sequence
-            const scancode = this.ANSI_TO_SCANCODE[input];
-            if(scancode !== undefined)
-            {
-                await this.emulator.keyboard_send_scancodes(this.encode_scancode_keypress(scancode));
-            }
-            else
-            {
-                console.warn("\nUnhandled ANSI sequence:", JSON.stringify(input));
-            }
+            // intercept CTRL+C
+            this.ctrl_c_handler(this.ctrl_c_count++);
+            return;
+        }
+        else if(this.ctrl_c_count)
+        {
+            // deliver CTRL+C intercepted earlier (replaces pressed key)
+            this.ctrl_c_count = 0;
+            const scancodes = this.encode_keypress(0x1D, this.encode_keypress(0x2E)); // 0x1D: "Ctrl", 0x2E: "C"
+            await this.emulator.keyboard_send_scancodes(scancodes, 10);
             return;
         }
 
-        for(let i = 0; i < input.length; i++)
+        let scancodes;
+        const ctrl_scancode = this.CTRL_KEY_SCANCODES[key.sequence];
+        if(ctrl_scancode !== undefined)
         {
-            let ch = input.charCodeAt(i);
-            if(ch === 3)
+            // handle composed keys Ctrl+A ... Ctrl+Z
+            scancodes = this.encode_keypress(0x1D, this.encode_keypress(ctrl_scancode));
+        }
+        else
+        {
+            const special_scancode = this.SPECIAL_KEY_SCANCODES[key.sequence];
+            if(special_scancode !== undefined)
             {
-                // CTRL+C pressed
-                this.ctrl_c_handler(this.ctrl_c_count++);
-                if(this.ctrl_c_count === 1)
-                {
-                    continue;
-                }
-                else
-                {
-                    return;
-                }
+                // handle special keys
+                scancodes = this.encode_keypress(special_scancode);
             }
+        }
 
-            if(this.ctrl_c_count)
-            {
-                // send buffered CTRL+C, silently drop ch
-                this.ctrl_c_count = 0;
-                await this.emulator.keyboard_send_scancodes(this.CTRL_C_SCANCODES, 10);
-                continue;
-            }
-
+        if(scancodes)
+        {
+            await this.emulator.keyboard_send_scancodes(scancodes, 10);
+        }
+        else if(key.sequence.length === 1)
+        {
+            // handle normal key
+            let ch = key.sequence.charCodeAt(0);
             if(ch === 127)
             {
-                // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
-                ch = 8;
+                ch = 8; // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
             }
-
             if(ch < 32)
             {
                 await this.emulator.keyboard_send_keys([ch], 10);
             }
             else
             {
-                await this.emulator.keyboard_send_text(input[i], 10);
+                await this.emulator.keyboard_send_text(key.sequence, 10);
             }
+        }
+        else
+        {
+            console.error("unhandled keyboard input, key:", key);
         }
     }
 
-    encode_scancode_keypress(scancode)
+    encode_keypress(scancode, wrap)
     {
         // press, then release key with given 8- or 16-bit scancode
-        return scancode < 0x100 ?
-            [ scancode,
-              scancode | 0x80 ] :
-            [ scancode >> 8, scancode & 0xff,
-              scancode >> 8, (scancode & 0xff) | 0x80 ];
+        return scancode < 0x100 ? [
+              scancode,
+              ...(wrap || []),
+              scancode | 0x80
+            ] : [
+              scancode >> 8,
+              scancode & 0xff,
+              ...(wrap || []),
+              scancode >> 8,
+              (scancode & 0xff) | 0x80
+            ];
     }
 }
 
@@ -623,6 +650,12 @@ const setup = parse_cli();
 if(setup.verbose)
 {
     console.log("setup:", setup);
+}
+
+if(!process.stdin.isTTY)
+{
+    console.error("error: stdin is not a TTY, aborting");
+    process.exit(1);
 }
 
 const V86 = (await import(setup.libv86)).V86;
