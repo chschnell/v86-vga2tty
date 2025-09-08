@@ -296,13 +296,12 @@ class StdinHandler
         }
     }
 
-    async handle_keypress(key_text, key)
+    async handle_keypress(text, key)
     {
         if(key.sequence === "\u0003")
         {
             // intercept CTRL+C
             this.ctrl_c_handler(this.ctrl_c_count++);
-            return;
         }
         else if(this.ctrl_c_count)
         {
@@ -310,50 +309,46 @@ class StdinHandler
             this.ctrl_c_count = 0;
             const scancodes = this.encode_keypress(0x1D, this.encode_keypress(0x2E)); // 0x1D: "Ctrl", 0x2E: "C"
             await this.emulator.keyboard_send_scancodes(scancodes, 10);
-            return;
-        }
-
-        let scancodes;
-        const ctrl_scancode = this.CTRL_KEY_SCANCODES[key.sequence];
-        if(ctrl_scancode !== undefined)
-        {
-            // handle composed keys Ctrl+A ... Ctrl+Z
-            scancodes = this.encode_keypress(0x1D, this.encode_keypress(ctrl_scancode));
         }
         else
         {
-            const special_scancode = this.SPECIAL_KEY_SCANCODES[key.sequence];
-            if(special_scancode !== undefined)
+            let scancode, scancodes;
+            if((scancode = this.SPECIAL_KEY_SCANCODES[key.sequence]) !== undefined)
             {
                 // handle special keys
-                scancodes = this.encode_keypress(special_scancode);
+                scancodes = this.encode_keypress(scancode);
             }
-        }
+            else if((scancode = this.CTRL_KEY_SCANCODES[key.sequence]) !== undefined)
+            {
+                // handle composed keys Ctrl+A ... Ctrl+Z
+                scancodes = this.encode_keypress(0x1D, this.encode_keypress(scancode));
+            }
 
-        if(scancodes)
-        {
-            await this.emulator.keyboard_send_scancodes(scancodes, 10);
-        }
-        else if(key.sequence.length === 1)
-        {
-            // handle normal key
-            let ch = key.sequence.charCodeAt(0);
-            if(ch === 127)
+            if(scancodes)
             {
-                ch = 8; // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
+                await this.emulator.keyboard_send_scancodes(scancodes, 10);
             }
-            if(ch < 32)
+            else if(key.sequence.length === 1)
             {
-                await this.emulator.keyboard_send_keys([ch], 10);
+                // handle normal key
+                let ch = key.sequence.charCodeAt(0);
+                if(ch === 127)
+                {
+                    ch = 8; // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
+                }
+                if(ch < 32)
+                {
+                    await this.emulator.keyboard_send_keys([ch], 10);
+                }
+                else
+                {
+                    await this.emulator.keyboard_send_text(key.sequence, 10);
+                }
             }
             else
             {
-                await this.emulator.keyboard_send_text(key.sequence, 10);
+                console.error("unhandled keyboard input, key:", key);
             }
-        }
-        else
-        {
-            console.error("unhandled keyboard input, key:", key);
         }
     }
 
