@@ -356,16 +356,16 @@ class StdinHandler
     {
         // press, then release key with given 8- or 16-bit scancode
         return scancode < 0x100 ? [
-              scancode,
-              ...(wrap || []),
-              scancode | 0x80
-            ] : [
-              scancode >> 8,
-              scancode & 0xff,
-              ...(wrap || []),
-              scancode >> 8,
-              (scancode & 0xff) | 0x80
-            ];
+            scancode,
+            ...(wrap || []),
+            scancode | 0x80
+        ] : [
+            scancode >> 8,
+            scancode & 0xff,
+            ...(wrap || []),
+            scancode >> 8,
+            (scancode & 0xff) | 0x80
+        ];
     }
 }
 
