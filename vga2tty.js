@@ -234,6 +234,7 @@ class StdinHandler
     // Map control characters (below 32) to their CTRL+<Char> character scancodes
     CTRL_KEY_SCANCODES =
     {
+        "\u0000": 0x03,         // CTRL+@
         "\u0001": 0x1e,         // CTRL+A
         "\u0002": 0x30,         // CTRL+B
         "\u0003": 0x2E,         // CTRL+C
@@ -260,6 +261,11 @@ class StdinHandler
         "\u0018": 0x2D,         // CTRL+X
         "\u0019": 0x15,         // CTRL+Y
         "\u001a": 0x2C,         // CTRL+Z
+        "\u001b": 0x1a,         // CTRL+[
+        "\u001c": 0x56,         // CTRL+Backslash
+        "\u001d": 0x1b,         // CTRL+]
+        "\u001e": 0x07,         // CTRL+^
+        "\u001f": 0x0c          // CTRL+_
     };
 
     constructor(ctrl_c_handler)
