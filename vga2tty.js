@@ -314,7 +314,7 @@ class StdinHandler
             // deliver CTRL+C intercepted earlier (replaces pressed key)
             this.ctrl_c_count = 0;
             const scancodes = this.encode_keypress(0x1D, this.encode_keypress(0x2E)); // 0x1D: "Ctrl", 0x2E: "C"
-            await this.emulator.keyboard_send_scancodes(scancodes, 10);
+            await this.emulator.keyboard_send_scancodes(scancodes);
         }
         else
         {
@@ -332,24 +332,17 @@ class StdinHandler
 
             if(scancodes)
             {
-                await this.emulator.keyboard_send_scancodes(scancodes, 10);
+                await this.emulator.keyboard_send_scancodes(scancodes);
             }
             else if(key.sequence.length === 1)
             {
                 // handle normal key
-                let ch = key.sequence.charCodeAt(0);
-                if(ch === 127)
+                let ch = key.sequence;
+                if(ch.charCodeAt(0) === 127)
                 {
-                    ch = 8; // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
+                    ch = "\b";  // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
                 }
-                if(ch < 32)
-                {
-                    await this.emulator.keyboard_send_keys([ch], 10);
-                }
-                else
-                {
-                    await this.emulator.keyboard_send_text(key.sequence, 10);
-                }
+                await this.emulator.keyboard_send_text(ch);
             }
             else
             {
@@ -416,7 +409,7 @@ function parse_cli()
             v86wasm: { type: "string" },
             bios: { type: "string" },
             vgabios: { type: "string" },
-            encoding: { type: "string" },
+            lang: { type: "string" },
             acpi: { type: "boolean", default: false },
             fastboot: { type: "boolean", default: false },
             loglevel: { type: "string", default: "0" },
@@ -464,7 +457,7 @@ function parse_cli()
         console.log("  -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)");
         console.log("  -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)");
         console.log("  -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)");
-        console.log("  -encoding STRING      8-bit character encoding (default: cp437");
+        console.log("  -lang STRING          language setting, one of us, uk, de (default: us)");
         console.log("  -acpi                 Enable ACPI (default: off)");
         console.log("  -fastboot             Enable fast boot");
         console.log("");
@@ -566,13 +559,20 @@ function parse_cli()
     };
 
     // parse command line options of v86_config
+    const langmap = {
+        "us": ["cp437", "kbdus"],
+        "uk": ["cp858", "kbduk"],
+        "de": ["cp858", "kbdgr"],
+    };
+    const [encoding, kbdid] = langmap[values.lang] ? langmap[values.lang] : [undefined, undefined];
     const v86_config = {
         wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
         bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
         vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
+        screen: { encoding: encoding },
+        keyboard: { kbdid: kbdid },
         log_level: parseInt(values.loglevel, 10),
-        autostart: true,
-        screen: { encoding: values.encoding }
+        autostart: true
     };
     assign_mem("mem", "memory_size");
     assign_mem("vgamem", "vga_memory_size");
