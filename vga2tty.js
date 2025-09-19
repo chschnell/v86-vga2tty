@@ -409,7 +409,7 @@ function parse_cli()
             v86wasm: { type: "string" },
             bios: { type: "string" },
             vgabios: { type: "string" },
-            lang: { type: "string" },
+            locale: { type: "string" },
             acpi: { type: "boolean", default: false },
             fastboot: { type: "boolean", default: false },
             loglevel: { type: "string", default: "0" },
@@ -457,7 +457,7 @@ function parse_cli()
         console.log("  -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)");
         console.log("  -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)");
         console.log("  -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)");
-        console.log("  -lang STRING          language setting, one of us, uk, de (default: us)");
+        console.log("  -locale STRING        Locale region, one of us, uk, de (default: us)");
         console.log("  -acpi                 Enable ACPI (default: off)");
         console.log("  -fastboot             Enable fast boot");
         console.log("");
@@ -563,7 +563,7 @@ function parse_cli()
         wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
         bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
         vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
-        lang: values.lang,
+        locale: values.locale,
         log_level: parseInt(values.loglevel, 10),
         autostart: true
     };

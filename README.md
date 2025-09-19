@@ -52,7 +52,7 @@ System options:
   -v86wasm FILE         V86 wasm file path (default: <v86dir>/build/v86.wasm)
   -bios FILE            BIOS image file (default: <v86dir>/bios/seabios.bin)
   -vgabios FILE         VGA BIOS image file (default: <v86dir>/bios/vgabios.bin)
-  -lang STRING          language setting, one of us, uk, de (default: us)
+  -locale STRING        Locale region, one of us, uk, de (default: us)
   -acpi                 Enable ACPI (default: off)
   -fastboot             Enable fast boot
 
