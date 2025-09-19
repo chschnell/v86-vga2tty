@@ -559,18 +559,11 @@ function parse_cli()
     };
 
     // parse command line options of v86_config
-    const langmap = {
-        "us": ["cp437", "kbdus"],
-        "uk": ["cp858", "kbduk"],
-        "de": ["cp858", "kbdgr"],
-    };
-    const [encoding, kbdid] = langmap[values.lang] ? langmap[values.lang] : [undefined, undefined];
     const v86_config = {
         wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
         bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
         vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
-        screen: { encoding: encoding },
-        keyboard: { kbdid: kbdid },
+        lang: values.lang,
         log_level: parseInt(values.loglevel, 10),
         autostart: true
     };
