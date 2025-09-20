@@ -491,18 +491,28 @@ function parse_cli()
         process.exit(0);
     }
 
-    // Helper functions
-    const assign_image_url = (argv_name, v86_name) => {
-        if(values[argv_name]) {
-            v86_config[v86_name || argv_name] = { url: path.resolve(values[argv_name]) };
-        }
+    // build v86_config
+    const v86_config = {
+        wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
+        bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
+        vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
+        locale: values.locale,
+        log_level: parseInt(values.loglevel, 10),
+        autostart: true
     };
-    const assign_value = (argv_name, v86_name) => {
+
+    // helper functions to assign values[] to v86_config[] for different value types
+    const v86_config_assign_value = (argv_name, v86_name) => {
         if(values[argv_name]) {
             v86_config[v86_name || argv_name] = values[argv_name];
         }
     };
-    const assign_mem = (argv_name, v86_name) => {
+    const v86_config_assign_image_url = (argv_name, v86_name) => {
+        if(values[argv_name]) {
+            v86_config[v86_name || argv_name] = { url: path.resolve(values[argv_name]) };
+        }
+    };
+    const v86_config_assign_mem = (argv_name, v86_name) => {
         if(values[argv_name]) {
             const match = values[argv_name].match(/^(\d+(?:\.\d+)?)([KMGT]?)$/i);
             if(!match)
@@ -522,7 +532,7 @@ function parse_cli()
             v86_config[v86_name || argv_name] = Math.floor(value * multipliers[unit]);
         }
     };
-    const assign_bootorder = (argv_name, v86_name) => {
+    const v86_config_assign_bootorder = (argv_name, v86_name) => {
         if(values[argv_name] && values[argv_name] !== "c") {
             const bootMap = {
                 "a": 0x01, // Floppy A
@@ -537,7 +547,7 @@ function parse_cli()
             v86_config[v86_name || argv_name] = bootMap[firstChar] || 0x80; // Default to hard disk
         }
     };
-    const assign_net_device = (argv_name, v86_name) => {
+    const v86_config_assign_net_device = (argv_name, v86_name) => {
         if(values[argv_name]) {
             const parts = values[argv_name].split(",");
             const mode = parts.shift();
@@ -546,7 +556,7 @@ function parse_cli()
             }
         }
     };
-    const assign_virtfs = (argv_name, v86_name) => {
+    const v86_config_assign_virtfs = (argv_name, v86_name) => {
         if(values[argv_name]) {
             const filesystem = {};
             const parts = values[argv_name].split(",");
@@ -558,30 +568,21 @@ function parse_cli()
         }
     };
 
-    // parse command line options of v86_config
-    const v86_config = {
-        wasm_path: values.v86wasm || path.join(values.v86dir, "build", values.debug_v86 ? "v86-debug.wasm" : "v86.wasm"),
-        bios: { url: values.bios || path.join(values.v86dir, "bios", "seabios.bin") },
-        vga_bios: { url: values.vgabios || path.join(values.v86dir, "bios", "vgabios.bin") },
-        locale: values.locale,
-        log_level: parseInt(values.loglevel, 10),
-        autostart: true
-    };
-    assign_mem("mem", "memory_size");
-    assign_mem("vgamem", "vga_memory_size");
-    assign_image_url("hda");
-    assign_image_url("hdb");
-    assign_image_url("fda");
-    assign_image_url("fdb");
-    assign_image_url("cdrom");
-    assign_image_url("kernel", "bzimage");
-    assign_image_url("initrd");
-    assign_value("append", "cmdline");
-    assign_bootorder("boot", "boot_order");
-    assign_value("acpi");
-    assign_value("fastboot");
-    assign_net_device("netdev", "net_device");
-    assign_virtfs("virtfs", "filesystem");
+    v86_config_assign_mem("mem", "memory_size");
+    v86_config_assign_mem("vgamem", "vga_memory_size");
+    v86_config_assign_image_url("hda");
+    v86_config_assign_image_url("hdb");
+    v86_config_assign_image_url("fda");
+    v86_config_assign_image_url("fdb");
+    v86_config_assign_image_url("cdrom");
+    v86_config_assign_image_url("kernel", "bzimage");
+    v86_config_assign_image_url("initrd");
+    v86_config_assign_value("append", "cmdline");
+    v86_config_assign_bootorder("boot", "boot_order");
+    v86_config_assign_value("acpi");
+    v86_config_assign_value("fastboot");
+    v86_config_assign_net_device("netdev", "net_device");
+    v86_config_assign_virtfs("virtfs", "filesystem");
 
     // return the setup object
     return {
