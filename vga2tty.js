@@ -202,70 +202,68 @@ class VgaObserver
 
 class StdinHandler
 {
-    // Map ANSI escape sequences of special keys to their respective scancodes
-    SPECIAL_KEY_SCANCODES =
+    // Map ANSI escape sequences of special keys to their respective KeyboardEvent.code names
+    SPECIAL_KEY_CODE =
     {
-        "\u001b[11~": 0x3b,     // F1
-        "\u001b[12~": 0x3c,     // F2
-        "\u001b[13~": 0x3d,     // F3
-        "\u001b[14~": 0x3e,     // F4
-        "\u001b[15~": 0x3f,     // F5
-        "\u001b[17~": 0x40,     // F6
-        "\u001b[18~": 0x41,     // F7
-        "\u001b[19~": 0x42,     // F8
-        "\u001b[20~": 0x43,     // F9
-        "\u001b[21~": 0x44,     // F10
-        "\u001b[23~": 0x57,     // F11
-        "\u001b[24~": 0x58,     // F12
-
-        "\u001b[A": 0xe048,     // ArrowUp
-        "\u001b[B": 0xe050,     // ArrowDown
-        "\u001b[C": 0xe04d,     // ArrowRight
-        "\u001b[D": 0xe04b,     // ArrowLeft
-
-        "\u001b[1~": 0xe047,    // Home
-        "\u001b[2~": 0xe052,    // Insert
-        "\u001b[3~": 0xe053,    // Delete
-        "\u001b[4~": 0xe04f,    // End
-        "\u001b[5~": 0xe049,    // PageUp
-        "\u001b[6~": 0xe051,    // PageDown
+        "\u001b[11~": "F1",
+        "\u001b[12~": "F2",
+        "\u001b[13~": "F3",
+        "\u001b[14~": "F4",
+        "\u001b[15~": "F5",
+        "\u001b[17~": "F6",
+        "\u001b[18~": "F7",
+        "\u001b[19~": "F8",
+        "\u001b[20~": "F9",
+        "\u001b[21~": "F10",
+        "\u001b[23~": "F11",
+        "\u001b[24~": "F12",
+        "\u001b[A":   "ArrowUp",
+        "\u001b[B":   "ArrowDown",
+        "\u001b[C":   "ArrowRight",
+        "\u001b[D":   "ArrowLeft",
+        "\u001b[1~":  "Home",
+        "\u001b[2~":  "Insert",
+        "\u001b[3~":  "Delete",
+        "\u001b[4~":  "End",
+        "\u001b[5~":  "PageUp",
+        "\u001b[6~":  "PageDown",
     };
 
-    // Map control characters (below 32) to their CTRL+<Char> character scancodes
-    CTRL_KEY_SCANCODES =
+    // Map control characters (below 32) to their CTRL+<key> character codes
+    CTRL_KEY_CODE =
     {
-        "\u0000": 0x03,         // CTRL+@
-        "\u0001": 0x1e,         // CTRL+A
-        "\u0002": 0x30,         // CTRL+B
-        "\u0003": 0x2E,         // CTRL+C
-        "\u0004": 0x20,         // CTRL+D
-        "\u0005": 0x12,         // CTRL+E
-        "\u0006": 0x21,         // CTRL+F
-        "\u0007": 0x22,         // CTRL+G
-        "\b":     0x23,         // CTRL+H (Backspace)
-        "\t":     0x17,         // CTRL+I (Tab)
-        "\n":     0x24,         // CTRL+J (Enter)
-        "\u000b": 0x25,         // CTRL+K
-        "\f":     0x26,         // CTRL+L (Formfeed)
-        "\r":     0x32,         // CTRL+M (Return)
-        "\u000e": 0x31,         // CTRL+N
-        "\u000f": 0x18,         // CTRL+O
-        "\u0010": 0x19,         // CTRL+P
-        "\u0011": 0x10,         // CTRL+Q
-        "\u0012": 0x13,         // CTRL+R
-        "\u0013": 0x1F,         // CTRL+S
-        "\u0014": 0x14,         // CTRL+T
-        "\u0015": 0x16,         // CTRL+U
-        "\u0016": 0x2F,         // CTRL+V
-        "\u0017": 0x11,         // CTRL+W
-        "\u0018": 0x2D,         // CTRL+X
-        "\u0019": 0x15,         // CTRL+Y
-        "\u001a": 0x2C,         // CTRL+Z
-        "\u001b": 0x1a,         // CTRL+[
-        "\u001c": 0x56,         // CTRL+Backslash
-        "\u001d": 0x1b,         // CTRL+]
-        "\u001e": 0x07,         // CTRL+^
-        "\u001f": 0x0c          // CTRL+_
+        "\u0000": "Digit2",       // CTRL+@
+        "\u0001": "KeyA",         // CTRL+A
+        "\u0002": "KeyB",         // CTRL+B
+        "\u0003": "KeyC",         // CTRL+C
+        "\u0004": "KeyD",         // CTRL+D
+        "\u0005": "KeyE",         // CTRL+E
+        "\u0006": "KeyF",         // CTRL+F
+        "\u0007": "KeyG",         // CTRL+G
+        "\b":     "KeyH",         // CTRL+H (Backspace)
+        "\t":     "KeyI",         // CTRL+I (Tab)
+        "\n":     "KeyJ",         // CTRL+J (Enter)
+        "\u000b": "KeyK",         // CTRL+K
+        "\f":     "KeyL",         // CTRL+L (Formfeed)
+        "\r":     "KeyM",         // CTRL+M (Return)
+        "\u000e": "KeyN",         // CTRL+N
+        "\u000f": "KeyO",         // CTRL+O
+        "\u0010": "KeyP",         // CTRL+P
+        "\u0011": "KeyQ",         // CTRL+Q
+        "\u0012": "KeyR",         // CTRL+R
+        "\u0013": "KeyS",         // CTRL+S
+        "\u0014": "KeyT",         // CTRL+T
+        "\u0015": "KeyU",         // CTRL+U
+        "\u0016": "KeyC",         // CTRL+V
+        "\u0017": "KeyW",         // CTRL+W
+        "\u0018": "KeyX",         // CTRL+X
+        "\u0019": "KeyY",         // CTRL+Y
+        "\u001a": "KeyZ",         // CTRL+Z
+        "\u001b": "BracketLeft",  // CTRL+[
+        "\u001c": "Backslash",    // CTRL+Backslash
+        "\u001d": "BracketRight", // CTRL+]
+        "\u001e": "Digit6",       // CTRL+^
+        "\u001f": "Minus"         // CTRL+_
     };
 
     constructor(ctrl_c_handler)
@@ -313,26 +311,18 @@ class StdinHandler
         {
             // deliver CTRL+C intercepted earlier (replaces pressed key)
             this.ctrl_c_count = 0;
-            const scancodes = this.encode_keypress(0x1D, this.encode_keypress(0x2E)); // 0x1D: "Ctrl", 0x2E: "C"
-            await this.emulator.keyboard_send_scancodes(scancodes);
+            await this.emulator.keyboard_send_keypress(["ControlLeft", "KeyC"]);
         }
         else
         {
-            let scancode, scancodes;
-            if((scancode = this.SPECIAL_KEY_SCANCODES[key.sequence]) !== undefined)
+            let code;
+            if((code = this.SPECIAL_KEY_CODE[key.sequence]) !== undefined)
             {
-                // handle special keys
-                scancodes = this.encode_keypress(scancode);
+                await this.emulator.keyboard_send_keypress([code]);
             }
-            else if((scancode = this.CTRL_KEY_SCANCODES[key.sequence]) !== undefined)
+            else if((code = this.CTRL_KEY_CODE[key.sequence]) !== undefined)
             {
-                // handle composed keys Ctrl+A ... Ctrl+Z
-                scancodes = this.encode_keypress(0x1D, this.encode_keypress(scancode));
-            }
-
-            if(scancodes)
-            {
-                await this.emulator.keyboard_send_scancodes(scancodes);
+                await this.emulator.keyboard_send_keypress(["ControlLeft", code]);
             }
             else if(key.sequence.length === 1)
             {
@@ -349,22 +339,6 @@ class StdinHandler
                 console.error("unhandled keyboard input, key:", key);
             }
         }
-    }
-
-    encode_keypress(scancode, wrap)
-    {
-        // press, then release key with given 8- or 16-bit scancode
-        return scancode < 0x100 ? [
-            scancode,
-            ...(wrap || []),
-            scancode | 0x80
-        ] : [
-            scancode >> 8,
-            scancode & 0xff,
-            ...(wrap || []),
-            scancode >> 8,
-            (scancode & 0xff) | 0x80
-        ];
     }
 }
 
