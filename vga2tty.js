@@ -202,68 +202,36 @@ class VgaObserver
 
 class StdinHandler
 {
-    // Map ANSI escape sequences of special keys to their respective KeyboardEvent.code names
-    SPECIAL_KEY_CODE =
+    NAMED_KEY_CODE =
     {
-        "\u001b[11~": "F1",
-        "\u001b[12~": "F2",
-        "\u001b[13~": "F3",
-        "\u001b[14~": "F4",
-        "\u001b[15~": "F5",
-        "\u001b[17~": "F6",
-        "\u001b[18~": "F7",
-        "\u001b[19~": "F8",
-        "\u001b[20~": "F9",
-        "\u001b[21~": "F10",
-        "\u001b[23~": "F11",
-        "\u001b[24~": "F12",
-        "\u001b[A":   "ArrowUp",
-        "\u001b[B":   "ArrowDown",
-        "\u001b[C":   "ArrowRight",
-        "\u001b[D":   "ArrowLeft",
-        "\u001b[1~":  "Home",
-        "\u001b[2~":  "Insert",
-        "\u001b[3~":  "Delete",
-        "\u001b[4~":  "End",
-        "\u001b[5~":  "PageUp",
-        "\u001b[6~":  "PageDown",
-    };
-
-    // Map control characters (below 32) to their CTRL+<key> character codes
-    CTRL_KEY_CODE =
-    {
-        "\u0000": "Digit2",       // CTRL+@
-        "\u0001": "KeyA",         // CTRL+A
-        "\u0002": "KeyB",         // CTRL+B
-        "\u0003": "KeyC",         // CTRL+C
-        "\u0004": "KeyD",         // CTRL+D
-        "\u0005": "KeyE",         // CTRL+E
-        "\u0006": "KeyF",         // CTRL+F
-        "\u0007": "KeyG",         // CTRL+G
-        "\b":     "KeyH",         // CTRL+H (Backspace)
-        "\t":     "KeyI",         // CTRL+I (Tab)
-        "\n":     "KeyJ",         // CTRL+J (Enter)
-        "\u000b": "KeyK",         // CTRL+K
-        "\f":     "KeyL",         // CTRL+L (Formfeed)
-        "\r":     "KeyM",         // CTRL+M (Return)
-        "\u000e": "KeyN",         // CTRL+N
-        "\u000f": "KeyO",         // CTRL+O
-        "\u0010": "KeyP",         // CTRL+P
-        "\u0011": "KeyQ",         // CTRL+Q
-        "\u0012": "KeyR",         // CTRL+R
-        "\u0013": "KeyS",         // CTRL+S
-        "\u0014": "KeyT",         // CTRL+T
-        "\u0015": "KeyU",         // CTRL+U
-        "\u0016": "KeyC",         // CTRL+V
-        "\u0017": "KeyW",         // CTRL+W
-        "\u0018": "KeyX",         // CTRL+X
-        "\u0019": "KeyY",         // CTRL+Y
-        "\u001a": "KeyZ",         // CTRL+Z
-        "\u001b": "BracketLeft",  // CTRL+[
-        "\u001c": "Backslash",    // CTRL+Backslash
-        "\u001d": "BracketRight", // CTRL+]
-        "\u001e": "Digit6",       // CTRL+^
-        "\u001f": "Minus"         // CTRL+_
+        "space":     "Space",
+        "backspace": "Backspace",
+        "escape":    "Escape",
+        "enter":     "Enter",
+        "return":    "Enter",
+        "tab":       "Tab",
+        "up":        "ArrowUp",
+        "down":      "ArrowDown",
+        "right":     "ArrowRight",
+        "left":      "ArrowLeft",
+        "home":      "Home",
+        "insert":    "Insert",
+        "delete":    "Delete",
+        "end":       "End",
+        "pageup":    "PageUp",
+        "pagedown":  "PageDown",
+        "f1":        "F1",
+        "f2":        "F2",
+        "f3":        "F3",
+        "f4":        "F4",
+        "f5":        "F5",
+        "f6":        "F6",
+        "f7":        "F7",
+        "f8":        "F8",
+        "f9":        "F9",
+        "f10":       "F10",
+        "f11":       "F11",
+        "f12":       "F12"
     };
 
     constructor(ctrl_c_handler)
@@ -315,24 +283,39 @@ class StdinHandler
         }
         else
         {
-            let code;
-            if((code = this.SPECIAL_KEY_CODE[key.sequence]) !== undefined)
+            if(key.name !== undefined && key.name.length > 1)
             {
-                await this.emulator.keyboard_send_keypress([code]);
+                const code = this.NAMED_KEY_CODE[key.name];
+                if(code !== undefined)
+                {
+                    await this.emulator.keyboard_send_keypress([code]);
+                }
+                else
+                {
+                    console.error("unhandled keyboard input, key name:", key.name);
+                }
             }
-            else if((code = this.CTRL_KEY_CODE[key.sequence]) !== undefined)
+            else if(key.name !== undefined && key.name.length === 1 && (key.ctrl || key.meta))
             {
-                await this.emulator.keyboard_send_keypress(["ControlLeft", code]);
+                const keys = [];
+                if(key.ctrl)
+                {
+                    keys.push("ControlLeft");
+                }
+                if(key.meta)
+                {
+                    keys.push("AltLeft");
+                }
+                if(key.shift)
+                {
+                    keys.push("ShiftLeft");
+                }
+                keys.push(key.name);
+                await this.emulator.keyboard_send_keypress(keys);
             }
             else if(key.sequence.length === 1)
             {
-                // handle normal key
-                let ch = key.sequence;
-                if(ch.charCodeAt(0) === 127)
-                {
-                    ch = "\b";  // map DEL (127) to BACKSPACE (8), depends on the keyboard hardware layout
-                }
-                await this.emulator.keyboard_send_text(ch);
+                await this.emulator.keyboard_send_text(key.sequence);
             }
             else
             {
